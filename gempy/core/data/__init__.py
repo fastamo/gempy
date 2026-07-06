@@ -16,6 +16,7 @@ from gempy_engine.core.data.stack_relation_type import StackRelationType
 from gempy_engine.core.data.options import InterpolationOptions
 from gempy_engine.core.data.solutions import Solutions
 from gempy_engine.core.data.raw_arrays_solution import RawArraysSolution
+from gempy_engine.core.data.interpolation_functions import CustomInterpolationFunctions
 from gempy_engine.core.data.transforms import GlobalAnisotropy, Transform
 from gempy_engine.core.data.kernel_classes.faults import FaultsData, FiniteFaultData
 from gempy_engine.config import AvailableBackends
@@ -29,5 +30,5 @@ __all__ = [
     'ImporterHelper', 'GemPyEngineConfig', 'FaultsRelationSpecialCase', 'ColorsGenerator', 'ModelValidationError',
     # From gempy engine
     'InterpolationInput','StackRelationType', 'InterpolationOptions', 'Solutions', 'RawArraysSolution', 'GlobalAnisotropy', 'Transform',
-    'FaultsData', 'FiniteFaultData', 'AvailableBackends', 'GeophysicsInput'
+    'FaultsData', 'FiniteFaultData', 'AvailableBackends', 'GeophysicsInput', 'CustomInterpolationFunctions'
 ]
