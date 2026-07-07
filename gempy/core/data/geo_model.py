@@ -104,7 +104,7 @@ class GeoModel(BaseModel):
         self._solutions = value
 
         # * Set solutions per element
-        for e, element in enumerate(self.structural_frame.structural_elements[:-1]):  # * Ignore basement
+        for e, element in enumerate(self.structural_frame.structural_elements_filtered[:-1]):  # * Ignore basement
             element.scalar_field_at_interface = value.scalar_field_at_surface_points[e]
 
             if self._solutions.dc_meshes is None:
