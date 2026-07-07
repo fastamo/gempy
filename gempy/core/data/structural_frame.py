@@ -203,6 +203,18 @@ class StructuralFrame:
         elements.append(self._basement_element)
         return elements
 
+
+    @property
+    def structural_elements_filtered(self) -> list[StructuralElement]:
+        """Returns a list of all structural elements across the structural groups."""
+        elements = []
+        for group in self.structural_groups:
+            if group.structural_relation == StackRelationType.NULL_SPACE:
+                continue
+            elements.extend(group.elements)
+        elements.append(self._basement_element)
+        return elements
+
     @property
     def n_elements(self) -> int:
         """Returns the total number of elements in the structural frame."""
