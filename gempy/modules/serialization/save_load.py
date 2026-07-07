@@ -173,12 +173,15 @@ def _load_model_from_bytes(data: bytes) -> GeoModel:
         header_json = zf.read("header.json").decode("utf-8")
         input_raw   = zf.read("input.bin")
         grid_raw    = zf.read("grid.bin")
+        meshes_json = zf.read("static_meshes.json").decode("utf-8")
 
     header_dict = json.loads(header_json)
     pending = StructuralFrame._extract_and_clear_fault_relation_names(
         header_dict.get('structural_frame', {}).get('structural_groups', [])
     )
-
+    
+    meshes_dict = json.loads(meshes_json)
+    
     with loading_model_from_binary(
             input_binary=input_raw,
             grid_binary= grid_raw
