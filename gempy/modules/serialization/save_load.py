@@ -65,7 +65,6 @@ def save_model(model: GeoModel, path: str | None = None, validate_serialization:
 
 
 def model_to_binary(model: GeoModel) -> bytes:
-
     # Compress the binary data
     zlib = require_zlib()
     compressed_binary_input = zlib.compress(model.structural_frame.input_tables_binary)
@@ -75,7 +74,7 @@ def model_to_binary(model: GeoModel) -> bytes:
 
     import hashlib
     print("len raw bytes:", len(model.grid.grid_binary))
-    
+
     print("raw bytes hash:", hashlib.sha256(model.grid.grid_binary).hexdigest())
     print("compressed length:", len(compressed_binary_grid))
     print("zlib version:", zlib.ZLIB_VERSION)
@@ -83,7 +82,7 @@ def model_to_binary(model: GeoModel) -> bytes:
     # * Add here the serialization meta parameters like: len_bytes
     model.structural_frame._input_binary_size = len(compressed_binary_input)
     model.grid._grid_binary_size = len(compressed_binary_grid)
-    
+
     model_json = model.model_dump_json(by_alias=True, indent=4)
     binary_file = _to_binary(
         header_json=model_json,
@@ -143,10 +142,10 @@ def model_to_bytes(model: GeoModel) -> bytes:
 
     # 2) Raw binary chunks (no additional zlib.compress here)
     input_raw = model.structural_frame.input_tables_binary
-    grid_raw  = model.grid.grid_binary
+    grid_raw = model.grid.grid_binary
 
     # 3) Pack into a ZIP archive in a fixed order:
-    
+
     buf = io.BytesIO()
     with zipfile.ZipFile(
             buf, mode="w",
@@ -155,15 +154,16 @@ def model_to_bytes(model: GeoModel) -> bytes:
     ) as zf:
         # Force a fixed timestamp (1980-01-01) so the file headers don't vary
         def make_info(name):
-            zi = zipfile.ZipInfo(name, date_time=(1980,1,1,0,0,0))
+            zi = zipfile.ZipInfo(name, date_time=(1980, 1, 1, 0, 0, 0))
             zi.external_attr = 0  # clear OS-specific file permissions
             return zi
 
         zf.writestr(make_info("header.json"), header_json)
-        zf.writestr(make_info("input.bin"),   input_raw)
-        zf.writestr(make_info("grid.bin"),    grid_raw)
+        zf.writestr(make_info("input.bin"), input_raw)
+        zf.writestr(make_info("grid.bin"), grid_raw)
 
     return buf.getvalue()
+
 
 def _load_model_from_bytes(data: bytes) -> GeoModel:
     from ...core.data.encoders.converters import loading_model_from_binary
@@ -171,57 +171,55 @@ def _load_model_from_bytes(data: bytes) -> GeoModel:
     buf = io.BytesIO(data)
     with zipfile.ZipFile(buf, "r") as zf:
         header_json = zf.read("header.json").decode("utf-8")
-        input_raw   = zf.read("input.bin")
-        grid_raw    = zf.read("grid.bin")
-        meshes_json = zf.read("static_meshes.json").decode("utf-8")
+        input_raw = zf.read("input.bin")
+        grid_raw = zf.read("grid.bin")
 
     header_dict = json.loads(header_json)
     pending = StructuralFrame._extract_and_clear_fault_relation_names(
         header_dict.get('structural_frame', {}).get('structural_groups', [])
     )
-    
-    meshes_dict = json.loads(meshes_json)
-    
+
     with loading_model_from_binary(
             input_binary=input_raw,
-            grid_binary= grid_raw
+            grid_binary=grid_raw
     ):
         model = GeoModel.model_validate(header_dict)
 
     model.structural_frame.restore_fault_relations_from_names(pending)
     return model
 
+
 def _deserialize_binary_file(binary_file):
     import json
     # Get header length from first 4 bytes
     header_length = int.from_bytes(binary_file[:4], byteorder='little')
     # Split header and body
-    header_json= binary_file[4:4 + header_length].decode('utf-8')
+    header_json = binary_file[4:4 + header_length].decode('utf-8')
     header = json.loads(header_json)
     input_metadata = header["structural_frame"]["binary_meta_data"]
     input_size = input_metadata["input_binary_size"]
-    
+
     grid_metadata = header["grid"]["binary_meta_data"]
     grid_size = grid_metadata["grid_binary_size"]
-    
+
     input_binary = binary_file[4 + header_length: 4 + header_length + input_size]
     all_sections_length = 4 + header_length + input_size + grid_size
     if all_sections_length != len(binary_file):
-        raise  ValueError("Binary file is corrupted")
-    
+        raise ValueError("Binary file is corrupted")
+
     grid_binary = binary_file[4 + header_length + input_size: all_sections_length]
     zlib = require_zlib()
-    
+
     pending = StructuralFrame._extract_and_clear_fault_relation_names(
         header.get('structural_frame', {}).get('structural_groups', [])
     )
-    
+
     with loading_model_from_binary(
             input_binary=(zlib.decompress(input_binary)),
             grid_binary=(zlib.decompress(grid_binary))
     ):
         model = GeoModel.model_validate(header)
-    
+
     model.structural_frame.restore_fault_relations_from_names(pending)
     return model
 
@@ -254,5 +252,3 @@ def _validate_serialization(original_model, model_deserialized):
         print(f"Deserialized: {deserialized___str__[i - i1:i + i1]}")
 
     assert deserialized___str__ == original_model___str__
-
-
