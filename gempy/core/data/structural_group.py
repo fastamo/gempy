@@ -32,6 +32,7 @@ class StructuralGroup(ABC):
     fault_relations: Optional[Union[list["StructuralGroup"], FaultsRelationSpecialCase]] = field(default=None, repr=False)
     faults_input_data: Optional[FaultsData] = field(default=None, repr=False)
     custom_interpolation: Optional[CustomInterpolationFunctions] = field(default=None, repr=False)
+    ignored_grid_types: tuple[str, ...] = field(default=(), repr=False)
 
     solution: Optional[RawArraysSolution] = field(init=False, default=None, repr=False)  #: Solution related to this group from geological computations.
     
