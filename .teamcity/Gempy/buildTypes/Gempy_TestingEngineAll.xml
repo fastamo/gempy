@@ -3,6 +3,9 @@
   <name>TestingEngine_All</name>
   <description />
   <settings>
+    <vcs-settings>
+      <vcs-entry-ref root-id="GempyEngine_HttpsGithubComGempyProjectGempyEngineRefsHeadsMain" />
+    </vcs-settings>
     <build-extensions>
       <extension id="BUILD_EXT_14" type="pullRequests">
         <parameters>
