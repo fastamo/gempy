@@ -3,6 +3,17 @@
   <name>TestingEngine_All</name>
   <description />
   <settings>
+    <build-extensions>
+      <extension id="BUILD_EXT_14" type="pullRequests">
+        <parameters>
+          <param name="authenticationType" value="token" />
+          <param name="filterAuthorRole" value="MEMBER" />
+          <param name="ignoreDrafts" value="true" />
+          <param name="providerType" value="github" />
+          <param name="secure:accessToken" value="credentialsJSON:e15ab25e-79f9-4750-9de4-4cab544e3d79" />
+        </parameters>
+      </extension>
+    </build-extensions>
     <dependencies>
       <depend-on sourceBuildTypeId="Gempy_TestingEngineNumpy" />
       <depend-on sourceBuildTypeId="Gempy_TestingEnginePyTorch" />
