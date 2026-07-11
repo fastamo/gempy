@@ -266,8 +266,9 @@ class Grid:
     @topography.setter
     def topography(self, value):
         self._topography = value
-        self.active_grids |= self.GridTypes.TOPOGRAPHY
-        self._update_values()
+        if value is not None:
+            self.active_grids |= self.GridTypes.TOPOGRAPHY
+            self._update_values()
 
     @property
     def sections(self):

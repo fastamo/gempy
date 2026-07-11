@@ -1,20 +1,24 @@
-﻿from gempy_engine.core.data.stack_relation_type import StackRelationType
+﻿from gempy_engine.core.data.interpolation_functions import CustomInterpolationFunctions
+from gempy_engine.core.data.stack_relation_type import StackRelationType
 from gempy.core.data import StructuralGroup, GeoModel, FaultsRelationSpecialCase, StructuralElement, StructuralFrame
 
 
 def add_structural_group(
         model: GeoModel, group_index: int, structural_group_name: str, elements: list[StructuralElement],
-        structural_relation: StackRelationType, fault_relations: FaultsRelationSpecialCase = FaultsRelationSpecialCase.OFFSET_ALL) -> StructuralFrame:
-    
+        structural_relation: StackRelationType,
+        fault_relations: FaultsRelationSpecialCase = FaultsRelationSpecialCase.OFFSET_ALL,
+        custom_interpolation: CustomInterpolationFunctions = None) -> StructuralFrame:
+
     # Check elements are a Sequence
     if not isinstance(elements, list):
         raise TypeError("elements must be a list of StructuralElement objects.")
-    
+
     new_group = StructuralGroup(
         name=structural_group_name,
         elements=elements,
         structural_relation=structural_relation,
-        fault_relations=fault_relations
+        fault_relations=fault_relations,
+        custom_interpolation=custom_interpolation
     )
 
     # Insert the fault group into the structural frame:
