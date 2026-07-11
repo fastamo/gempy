@@ -2,7 +2,9 @@
 from abc import ABC
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import Optional, Union, Generator
+from typing import Annotated, Optional, Union, Generator
+
+from pydantic import Field
 
 from gempy_engine.core.data.interpolation_functions import CustomInterpolationFunctions
 from gempy_engine.core.data.kernel_classes.faults import FaultsData
@@ -31,8 +33,8 @@ class StructuralGroup(ABC):
     #: Relations with other groups in terms of faults.
     fault_relations: Optional[Union[list["StructuralGroup"], FaultsRelationSpecialCase]] = field(default=None, repr=False)
     faults_input_data: Optional[FaultsData] = field(default=None, repr=False)
-    custom_interpolation: Optional[CustomInterpolationFunctions] = field(default=None, repr=False)
-    ignored_grid_types: tuple[str, ...] = field(default=(), repr=False)
+    custom_interpolation: Annotated[Optional[CustomInterpolationFunctions], Field(exclude=True)] = field(default=None, repr=False)
+    ignored_grid_types: Annotated[tuple[str, ...], Field(exclude=True)] = field(default_factory=tuple, repr=False)
 
     solution: Optional[RawArraysSolution] = field(init=False, default=None, repr=False)  #: Solution related to this group from geological computations.
     
