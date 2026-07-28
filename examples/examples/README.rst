@@ -1,6 +1,6 @@
 Examples
 ========
 
-This examples intend to be a gallery of what other people has done with GemPy.
-Hopefully with the help of the community we can create a complete library of
-structures that can serve as template for new users.
+This gallery showcases what other people have built with GemPy: real case studies alongside
+simple synthetic geometries. With the community's help, we hope to grow this into a full
+library of structures that can serve as a starting template for new users.

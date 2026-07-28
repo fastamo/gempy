@@ -1,4 +1,5 @@
-Real case studies
------------------
+Real Case Studies
+--------------------
 
-These models are built with real data
+Geological models built from real-world datasets, spanning sedimentary basins, greenstone
+belts, karst terrain, and geomodeling benchmark datasets from France, Spain, and Australia.
