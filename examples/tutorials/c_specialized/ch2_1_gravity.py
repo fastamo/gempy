@@ -1,7 +1,12 @@
 """
-2.1 Forward Gravity: Simple example
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Forward Gravity Modeling
+===========================
 
+Computing a simple gravity response for a greenstone belt model
+
+This tutorial reuses the Sandstone Greenstone Belt model to demonstrate GemPy's forward
+gravity computation: setting up a measurement grid, computing the gravity kernel, and
+comparing the resulting gravity response against the model's lithology.
 """
 
 # %%
@@ -24,7 +29,7 @@ data_path = os.path.abspath('../../data/input_data/tut_SandStone')
 
 # Importing the data from csv
 
-geo_model: gp.data.GeoModel = gp.create_geomodel(
+geo_model = gp.create_geomodel(
     project_name='Greenstone',
     extent=[696000, 747000, 6863000, 6930000, -20000, 200],  # * Here we define the extent of the model
     refinement=5,  # * Here we define the number of octree levels. If octree levels are defined, the resolution is ignored.
@@ -46,10 +51,8 @@ gp.map_stack_to_surfaces(
     }
 )
 
-# %% 
-gpv.plot_2d(geo_model)
-
 # %%
+gpv.plot_2d(geo_model)
 
 # %%
 # Creating grid
@@ -81,13 +84,11 @@ plt.scatter(xy_ravel[:, 0], xy_ravel[:, 1], s=1)
 plt.show()
 
 # %%
-# Now we need to create the grid centered on the devices (see:
-# https://github.com/cgre-aachen/gempy/blob/master/notebooks/tutorials/ch1-3-Grids.ipynb)
-# 
+# Now we need to create the grid centered on the devices (see the grids tutorial in
+# the Advanced section for background on centered grids):
+#
 
-# %% 
-# geo_model.set_centered_grid(xy_ravel, resolution=[10, 10, 15], radius=5000)
-
+# %%
 gp.set_centered_grid(
     grid=geo_model.grid,
     centers=xy_ravel,
@@ -99,9 +100,9 @@ gp.set_centered_grid(
 geo_model.grid.centered_grid.kernel_grid_centers
 
 # %%
-# Now we need to compute the component tz (see
-# https://github.com/cgre-achen/gempy/blob/master/notebooks/tutorials/ch2-2-Cell_selection.ipynb)
-# 
+# Now we need to compute the component tz (see the Centered Grids for Geophysics
+# tutorial for the background on this decomposition):
+#
 
 # %%
 

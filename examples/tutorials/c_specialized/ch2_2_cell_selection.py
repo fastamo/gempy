@@ -1,37 +1,39 @@
 """
-2.2: Centered Grid.
-^^^^^^^^^^^^^^^^^^^
+Centered Grids for Geophysics
+================================
 
+Precomputing the gravity kernel of a measurement-centered grid
+
+This tutorial explains the concept of a centered grid and uses it to precompute the tz
+kernel needed for GemPy's forward gravity computation.
 """
 
 # %%
-# 
 # Concept of a measurement-centered grid
 # """"""""""""""""""""""""""""""""""""""
 #
-# Geophysics Preprocessing builds on the centered grid
-# (https://github.com/cgre-aachen/gempy/blob/master/notebooks/tutorials/ch1-3-Grids.ipynb)
-# to precompute the constant part of forward physical computations as for
-# example gravity:
+# Geophysics preprocessing builds on the centered grid (see the Grids tutorial in the
+# Advanced section) to precompute the constant part of forward physical computations,
+# such as gravity:
 
 # .. math::
 
-#     F_z = G_{\\rho} ||| x \\ln(y+r) + y \\ln (x+r) - z \\arctan (\\frac{x y}{z r}) |^{x_2}_{x_1}|^{y_2}_{y_1}|^{
+#     F_z = G_{\rho} ||| x \ln(y+r) + y \ln (x+r) - z \arctan (\frac{x y}{z r}) |^{x_2}_{x_1}|^{y_2}_{y_1}|^{
 #     z_2}_{z_1}
 
 
-# where we can compress the grid dependent terms as
+# where we can compress the grid-dependent terms as
 
 # .. math::
 
-#     t_z = ||| x \ln (y+r) + y \ln (x+r)-z \\arctan ( \\frac{x y}{z r} ) |^{x_2}_{x_1}|^{y_2}_{y_1}|^{z_2}_{z_1}
+#     t_z = ||| x \ln (y+r) + y \ln (x+r)-z \arctan ( \frac{x y}{z r} ) |^{x_2}_{x_1}|^{y_2}_{y_1}|^{z_2}_{z_1}
 
-# By doing this decomposition an keeping the grid constant we can compute
-# the forward gravity by simply operate:
+# By doing this decomposition and keeping the grid constant, we can compute the forward
+# gravity with a single operation:
 
 # .. math::
 
-#     F_z = G_{\\rho} \cdot t_z
+#     F_z = G_{\rho} \cdot t_z
 
 
 # %%
@@ -55,16 +57,16 @@ centered_grid = CenteredGrid(
     radius=100
 )
 # %%
-# ``create_irregular_grid_kernel`` will create a constant kernel around
-# the point 0,0,0. This kernel will be what we use for each device.
-# 
+# Instantiating ``CenteredGrid`` creates a constant kernel around the point (0, 0, 0).
+# This kernel will be what we use for each device.
+#
 
 # %% 
 centered_grid.kernel_grid_centers
 
 # %%
 # :math:`t_z` is only dependent on distance and therefore we can use the
-# kerenel created on the previous cell
+# kernel created in the previous cell
 # 
 
 # %% 
@@ -72,10 +74,10 @@ gravity_gradient = gp.calculate_gravity_gradient(centered_grid)
 gravity_gradient
 
 # %%
-# To compute tz we also need the edges of each voxel. The distance to the
-# edges are stored on ``kernel_dxyz_left`` and ``kernel_dxyz_right``. We
+# To compute tz we also need the edges of each voxel. The distances to the
+# edges are stored in ``left_voxel_edges`` and ``right_voxel_edges``. We
 # can plot all the data as follows:
-# 
+#
 
 # %% 
 a, b, c = centered_grid.kernel_grid_centers, centered_grid.left_voxel_edges, centered_grid.right_voxel_edges
