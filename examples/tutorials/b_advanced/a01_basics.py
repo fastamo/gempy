@@ -52,7 +52,7 @@ import gempy_viewer as gpv
 data_path = 'https://raw.githubusercontent.com/cgre-aachen/gempy_data/master/'
 
 geo_model = gp.create_geomodel(
-    project_name='Tutorial_ch1_1_Basics',
+    project_name='Tutorial_Basics',
     extent=[0, 2000, 0, 2000, 0, 750],
     refinement=6,
     importer_helper=gp.data.ImporterHelper(

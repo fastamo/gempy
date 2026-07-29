@@ -192,7 +192,7 @@ plt.show()
 # A centered grid is an irregular grid where voxels are concentrated around one or more
 # center points and get coarser with distance -- suited to forward physics computations
 # where the influence of a source falls off with distance, such as gravity. See
-# :doc:`../c_specialized/ch2_2_cell_selection` for the full worked example (precomputing
+# :doc:`../c_specialized/a01_cell_selection` for the full worked example (precomputing
 # the gravity kernel):
 
 # %%
@@ -234,4 +234,4 @@ plt.show()
 # <gempy.set_section_grid>`) are also just grid types under the hood -- each adds its
 # own entry to ``active_grids`` exactly like the regular, octree, custom, and centered
 # grids above. They're covered in their own right, together with all of gempy_viewer's
-# plotting options for them, in :doc:`ch1_6_2d_visualization`.
+# plotting options for them, in :doc:`d04_2d_visualization`.
