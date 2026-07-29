@@ -1,9 +1,6 @@
 Specialized
 -----------
 
-Focused examples on specific functionality: forward geophysics, domain
-kriging, topological analysis, and JSON model import/export. At this date
-GemPy is not meant to be a package for classical geophysical inversion,
-rather to allow probabilistic inversion. This means that we need algorithms
-that can be fast, differentiable but still capable to estimate the right
-answer!
+Focused tutorials on specific GemPy functionality, building on the Advanced section.
+GemPy is designed for probabilistic rather than classical geophysical inversion, so
+these lean on algorithms that are fast and differentiable, not just accurate.
