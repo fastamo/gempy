@@ -1,21 +1,25 @@
 """
-1.1 -Basics of geological modeling with GemPy
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Basics
+======
 
+A closer look at gempy's data classes and modeling API
+
+This tutorial is a written companion to the video tutorials, covering the same simple
+fault model but going into more technical depth: the data classes gempy is built on,
+constructing structural elements and groups directly rather than through a CSV import,
+inspecting a computed model's solutions and meshes, and saving a model to disk.
 """
-import numpy as np
 
 # %%
-# Importing Necessary Libraries
-# """"""""""""""""""""""""""""""
+import numpy as np
+
 import gempy as gp
 import gempy_viewer as gpv
 
 # %%
-# Importing and Defining Input Data
-# """""""""""""""""""""""""""""""""
-# :obj:`gempy.core.data.GeoModel`
-# GemPy uses Python objects to store the data that builds the geological model. The main data classes include:
+# gempy's data classes
+# -----------------------
+# gempy uses a small set of Python classes to store everything that goes into a model:
 #
 #     -  :obj:`gempy.core.data.GeoModel`
 #     -  :obj:`gempy.core.data.StructuralFrame`
@@ -25,34 +29,32 @@ import gempy_viewer as gpv
 #     -  :obj:`gempy.core.data.OrientationsTable`
 #     -  :obj:`gempy.core.data.Grid`
 #
-# You can also create data from raw CSV files (comma-separated values). This could be useful if you are exporting model data
-# from a different program or creating it in a spreadsheet software like Microsoft Excel or LibreOffice Calc.
+# A ``GeoModel`` holds one ``StructuralFrame``, which is an ordered list of
+# ``StructuralGroup`` objects (also called series or stacks), each containing one or
+# more ``StructuralElement`` objects -- a lithological unit or a fault surface, defined
+# by a ``SurfacePointsTable`` and an ``OrientationsTable``. The rest of this tutorial
+# builds up a model through these classes and looks at each one along the way.
+
+# %%
+# Model setup
+# -------------
+# Surface points mark the **bottom** of a layer (if you need the top of a formation --
+# modeling an intrusion, say -- use an inverted orientation instead). Data can be
+# supplied from CSV files, as here, or built up point by point in code, which the next
+# tutorial covers.
 #
-# In this tutorial, we'll use CSV files to generate input data. You can find these example files in the `gempy data`
-# repository on GitHub. The data consists of x, y, and z positional values for all surface points and orientation
-# measurements. Additional data includes poles, azimuth and polarity (or the gradient components). Surface points are
-# assigned a formation, which can be a lithological unit (like "Sandstone") or a structural feature (like "Main Fault"). 
-#
-# It's important to note that, in GemPy, interface position points mark the **bottom** of a layer. If you need points
-# to represent the top of a formation (for example, when modeling an intrusion), you can define an inverted orientation measurement.
-#
-# While generating data from CSV files, we also need to define the model's real extent in x, y, and z. This extent
-# defines the area used for interpolation and many of the plotting functions. We also set a resolution to establish a
-# regular grid right away. This resolution will dictate the number of voxels used during modeling. We're using a medium
-# resolution of 50x50x50 here, which results in 125,000 voxels. The model extent should enclose all relevant data in a
-# representative space. As our model voxels are prisms rather than cubes, the resolution can differ from the extent.
-# However, it is recommended to avoid going beyond 100 cells in each direction (1,000,000 voxels) to prevent excessive
-# computational costs.
-#
-#
+# The model's ``extent`` defines the volume used for interpolation and plotting, and
+# should enclose all the input data. ``refinement`` sets the number of octree levels
+# used to extract smooth surfaces (see the Grids tutorial for the full explanation of
+# how this interacts with ``resolution``).
 
 # %%
 data_path = 'https://raw.githubusercontent.com/cgre-aachen/gempy_data/master/'
 
-geo_model: gp.data.GeoModel = gp.create_geomodel(
+geo_model = gp.create_geomodel(
     project_name='Tutorial_ch1_1_Basics',
     extent=[0, 2000, 0, 2000, 0, 750],
-    refinement=6,  # * Here we define the number of octree levels. If octree levels are defined, the resolution is ignored.
+    refinement=6,
     importer_helper=gp.data.ImporterHelper(
         path_to_orientations=data_path + "/data/input_data/getting_started/simple_fault_model_orientations.csv",
         path_to_surface_points=data_path + "/data/input_data/getting_started/simple_fault_model_points.csv",
@@ -61,227 +63,183 @@ geo_model: gp.data.GeoModel = gp.create_geomodel(
     )
 )
 
-# %% 
-# .. admonition:: New in GemPy 3! 
+# %%
+# ``ImporterHelper`` bundles everything needed to import data from various sources --
+# here, CSV files fetched over HTTP and verified against a known hash, matching every
+# other tutorial in this documentation.
 #
-#    GemPy 3 has introduced the ``ImporterHelper`` class to streamline importing data from various sources. This class
-#    simplifies the process of passing multiple arguments needed for importing data and will likely see further 
-#    extensions in the future. Currently, one of its uses is to handle `pooch` arguments for downloading data from the internet.
-#
-#
-#
-# Reviewing the Imported Data
-# """""""""""""""""""""""""""
-# Now that the `geo_model` object is set up and the data imported from the CSV files, we review the data imported using the properties `surface_points_copy` and `orientations_copy`.
-#
-# Using `structural_frame.element_id_name_map`, we can see which ID corresponds to which structural element name in the data.
-
-
-# %% 
-geo_model.surface_points_copy
-
-# %% 
-geo_model.orientations_copy
-
+# Reviewing the imported data
+# ------------------------------
+# The raw imported points and orientations are available as ``surface_points_copy`` and
+# ``orientations_copy``:
 
 # %%
-# Declaring the Sequential Order of Structural Elements (Geological Formations)
-# """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-# In our model, we want the geological units to appear in the correct chronological order. This order could be determined by a sequence
-# of stratigraphic deposition, unconformities due to erosion, or other lithological genesis events like igneous intrusions. A similar
-# age-related order is declared for faults in our model. In GemPy, we use the function `gempy.map_stack_to_surfaces` to assign formations
-# or faults to different sequential series by declaring them in a Python dictionary.
+geo_model.surface_points_copy
+
+# %%
+geo_model.orientations_copy
+
+# %%
+# Each structural element is internally tracked by a numeric ID. Note these aren't the
+# small, sequential IDs used to color the lithology block in plots -- they're derived
+# directly from each element's name and used for tracking identity regardless of
+# reordering. ``element_id_name_map`` looks up which ID corresponds to which element:
+
+# %%
+geo_model.structural_frame.element_id_name_map
+
+# %%
+# Structural groups and series
+# -------------------------------
+# Geological units need to appear in the correct chronological order -- a sequence of
+# deposition, unconformities, intrusions, and so on. In gempy this is expressed by
+# assigning each unit (and each fault) to a **structural group**, using
+# ``map_stack_to_surfaces``. Units in the same group share one continuous scalar field,
+# so the order *within* a group only affects the default color; the order *between*
+# groups is what encodes geological age, oldest at the bottom.
 #
+# Faults are always their own group and must be younger than whatever they affect.
+# Where multiple faults are involved, their relative order encodes their tectonic
+# relationship (the first entry is the youngest).
 #
-# The correct ordering of series is crucial for model construction! It's possible to assign several surfaces to one series. The order of
-# units within a series only affects the color code, so we recommend maintaining consistency. The order can be defined by simply changing
-# the order of the lists within the `gempy.core.data.StructuralFrame.structural_groups` and `gempy.core.data.StructuralGroups.elements` attributes.
-#
-# Faults are treated as independent groups and must be younger than the groups they affect. The relative order between different faults
-# defines their tectonic relationship (the first entry is the youngest).
-#
-# For a model with simple sequential stratigraphy, all layer formations can be assigned to one series without an issue. All unit
-# boundaries and their order would then be determined by interface points. However, to model more complex lithostratigraphical
-# relations and interactions, separate series definitions become important. For example, modeling an unconformity or an intrusion
-# that disrupts older stratigraphy would require declaring a younger series.
-#
-# By default, a simple sequence/group is created inferred from the data as shown above.
-#
-# Our example model comprises four main layers (plus an underlying basement that is automatically generated by GemPy) and one main
-# normal fault displacing those layers. Assuming a simple stratigraphy where each younger unit was deposited onto the underlying
-# older one, we can assign these layer formations to one structural group called "Strat_Series". For the fault, we declare a
-# respective "Fault_Series" as the first key entry in the mapping dictionary. We could give any other names to these series;
-# the formations, however, have to be referred to as named in the input data.
-#
-# In the following, we map the "Main Fault" to the "Fault Series" and the individual formations to the "Strat Series".
+# This model has one fault and four stratigraphic layers, assigned to two groups:
 
 # %%
 gp.map_stack_to_surfaces(
     gempy_model=geo_model,
-    mapping_object=  # TODO: This mapping I do not like it too much. We should be able to do it passing the data objects directly
-    {
-            "Fault_Series": 'Main_Fault',
-            "Strat_Series": ('Sandstone_2', 'Siltstone', 'Shale', 'Sandstone_1')
+    mapping_object={
+        "Fault_Series": 'Main_Fault',
+        "Strat_Series": ('Sandstone_2', 'Siltstone', 'Shale', 'Sandstone_1')
     }
 )
 
 # %%
-# Note how the structural frame still indicates the "Fault Series" group to have a relation type "erode".
-# We still need to tell GemPy that we want this group to be a fault. We do this using the function `set_is_fault`.
+# ``map_stack_to_surfaces`` doesn't yet mark ``Fault_Series`` as a fault -- every group
+# defaults to an ``ERODE`` relation (the next section explains what that means).
+# ``set_is_fault`` does that:
 
-# %% 
-gp.set_is_fault(
-    frame=geo_model.structural_frame,
-    fault_groups=['Fault_Series']
+# %%
+gp.set_is_fault(geo_model, ["Fault_Series"])
+
+# %%
+# Setting a group as a fault also populates ``fault_relations``: a boolean matrix of
+# which groups each fault offsets. Here, ``Fault_Series`` (row 0) affects
+# ``Strat_Series`` (column 1), and nothing affects the fault itself:
+
+# %%
+geo_model.structural_frame.fault_relations
+
+# %%
+# Building structural elements and groups directly
+# ---------------------------------------------------
+# Importing from a CSV is only one way to get data into a model. Since a
+# ``StructuralElement`` is just a plain data class, it can be constructed directly from
+# arrays -- useful when adding a unit that doesn't come from a file, or when building a
+# model up incrementally (the next tutorial does exactly this, one borehole reading at
+# a time). A new element needs at least two surface points and one orientation
+# somewhere in its group before a model can be computed:
+
+# %%
+new_element = gp.data.StructuralElement(
+    name='Example_Surface',
+    color=next(geo_model.structural_frame.color_generator),
+    surface_points=gp.data.SurfacePointsTable.from_arrays(
+        x=np.array([500, 1500]),
+        y=np.array([1000, 1000]),
+        z=np.array([600, 600]),
+        names='Example_Surface'
+    ),
+    orientations=gp.data.OrientationsTable.initialize_empty()
 )
+new_element
 
 # %%
-# Now, all surfaces have been assigned to a series and are displayed in the correct order 
-# (from young to old).
+# A ``StructuralGroup`` is likewise just a name, a list of elements, and a relation
+# type:
+
+# %%
+new_group = gp.data.StructuralGroup(
+    name='Example_Series',
+    elements=[new_element],
+    structural_relation=gp.data.StackRelationType.ERODE
+)
+new_group
+
+# %%
+# Adding either of these to a live model is a matter of inserting them into the
+# structural frame -- ``existing_group.append_element(...)`` for an element joining an
+# existing group, or ``structural_frame.insert_group(index, group)`` for a whole new
+# group -- both covered as part of an actual worked example in the next tutorial. This
+# example isn't inserted here, to keep the model above unchanged for the rest of this
+# tutorial.
 #
-# Returning Information from Our Input Data
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Our model input data, named "geo_model", contains all essential information for constructing 
-# our model. You can access different types of information by accessing the attributes.
-# For instance, you can retrieve the coordinates of our modeling grid as follows:
-
-
-# %% 
-geo_model.grid
-
-# %%
-# 
 # Visualizing input data
-# ~~~~~~~~~~~~~~~~~~~~~~
-# 
-# Since we have already imported our input data, we can go ahead and visualize it in 2D and 3D. This can be useful to check if all points
-# and orientations are defined the way we want them to be. Using the function `gempy_viewer.plot2d`, we obtain a 2D projection of our
-# data points onto a plane of the chosen *direction* (we can choose this attribute to be either x, y or z, with the default being y).
-# Below, we can freely switch the direction and check out the projection from different sides to get a good idea.
-
+# -------------------------
+# With the data imported and organized into groups, it can be checked visually before
+# computing anything. ``plot_2d`` projects the input data onto a plane along a chosen
+# ``direction`` (``'x'``, ``'y'``, or ``'z'``, default ``'y'``):
 
 # %%
-plot = gpv.plot_2d(geo_model, show_lith=False, show_boundaries=False)
+gpv.plot_2d(geo_model, show_lith=False, show_boundaries=False)
 
 # %%
-# Beyond 2D, however, we can also visualize our input data in full 3D using `gempy_viewer.plot_3d`. Note that direct 3D visualization
-# in GemPy requires [the Visualization Toolkit](https://www.vtk.org/) (VTK) to be installed.
-
+# and ``plot_3d`` shows the same data in an interactive 3D view:
 
 # %%
-gpv.plot_3d(geo_model, image=False, plotter_type='basic')
+gpv.plot_3d(geo_model, show_lith=False)
 
 # %%
-# Model Generation
-# ~~~~~~~~~~~~~~~~
-# Once we've correctly defined all our primary information in our `gempy.core.data.GeoModel` object (referred to as `geo_model`
-# in these tutorials), we can proceed with the model computation step. We can go ahead and save the solution of a specific computation
-# as we do below, but solutions are also stored within the `gempy.core.data.GeoModel` object for future reference.
-#
-#
-# .. admonition:: New in GemPy 3!  Numpy and TensorFlow backend
-#
-#    Unlike previous versions, GemPy 3 doesn't rely on `theano` or `asera`. 
-#    Instead, it utilizes `numpy` or `tensorflow`. Consequently, we no longer need 
-#    to recompile all theano functions (TensorFlow uses eager execution; we found no 
-#    notable speed difference after profiling the XLA compiler).
+# Computing the model
+# ----------------------
+# The interpolation parameters live in ``interpolation_options``, with sensible
+# defaults (see the Grids tutorial for what ``number_octree_levels`` specifically
+# controls) -- change them only if you understand the implications:
 
 # %%
-# The parameters used for the interpolation are stored in 
-# `gempy.core.data.GeoModel.interpolation_options`. These parameters have sensible default values 
-# that you can modify if necessary. However, we advise caution when changing these parameters 
-# unless you fully understand their implications.
-
-# %%
-# Display the current interpolation options
 geo_model.interpolation_options
 
 # %%
-# With all our prerequisites in place, we can now compute our complete geological model 
-# using :func:`gempy.compute_model`. This function returns a :obj:`gempy.core.data.Solutions` object.
-#
-# The following sections illustrate these different model solutions and how to utilize them.
+# ``compute_model`` runs the interpolation and returns a ``Solutions`` object, which is
+# also stored on the model itself as ``geo_model.solutions`` for later reference:
 
 # %%
-# Compute the geological model and get the solutions
-sol = gp.compute_model(geo_model)
-sol
-
-# %% 
-# Solutions are also stored within the :obj:`gempy.core.data.GeoModel` object, for future reference.
-
-# %%
+gp.compute_model(geo_model)
 geo_model.solutions
 
 # %%
-# Direct model visualization in GemPy
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 
-# Model solutions can be easily visualized in 2D sections in GemPy
-# directly. Let's take a look at our lithology block:
-#
+# Visualizing the result
+# --------------------------
+# The computed lithology block plots the same way as the input data, by default showing
+# a section through the middle of the model:
 
 # %%
 gpv.plot_2d(geo_model, show_data=True, cell_number="mid", direction='y')
 
 # %%
-# With ``cell_number=mid``, we have chosen a section going through
-# the middle of our block. We have moved in ``direction='y'``,
-# the plot thus depicts a plane parallel to the :math:`x`- and
-# :math:`y`-axes. Setting ``show_data=True``, we could plot original data
-# together with the results. Changing the values for ``cell_number`` and
-# ``direction``, we can move through our 3D block model and explore it by
-# looking at different 2D planes.
-# 
-# We can do the same with the underlying scalar-field solution:
-# 
-
+# Each structural group has its own scalar field, selectable via ``series_n`` (its
+# position in ``map_stack_to_surfaces``, 0-indexed) -- series 0 is the fault:
 
 # %%
-gpv.plot_2d(
-    model=geo_model,
-    series_n=0,  # This will plot the scalar field used for the fault
-    show_data=False,
-    show_scalar=True,
-    show_lith=False
-)
+gpv.plot_2d(geo_model, series_n=0, show_data=False, show_scalar=True, show_lith=False)
 
 # %%
-gpv.plot_2d(
-    model=geo_model,
-    series_n=1,  # This will plot the scalar field used for the stratigraphy
-    show_data=False,
-    show_scalar=True,
-    show_lith=False
-)
+# and series 1 is the stratigraphy, visibly offset by the fault:
 
 # %%
-# Dual Contouring and vtk visualization
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 
-# In addition to 2D sections we can extract surfaces to visualize in 3D
-# renderers. Surfaces can be visualized as 3D triangle complexes in VTK
-# (see function plot\_surfaces\_3D below). To create these triangles, we
-# need to extract respective vertices and simplices from the potential
-# fields of lithologies and faults. This process is automatized in GemPy
-# using dual contouring in the :obj:`gempy_engine`.
-# 
-# .. admonition:: New in GemPy 3! Dual Contouring
-#
-#    GemPy 3 uses dual contouring to extract surfaces from the scalar fields. The method is completely coded in :obj:`gempy_engine` what also
-#    enables further improvements in the midterm. This method is more efficient to use
-#    together with octrees and suited better the new capabilities of gempy3. 
+gpv.plot_2d(geo_model, series_n=1, show_data=False, show_scalar=True, show_lith=False)
 
-# %% 
-gpv.plot_3d(geo_model, show_data=False, image=False, plotter_type='basic')
+# %%
+# The same result in 3D, with the surfaces extracted via dual contouring:
+
+# %%
+gpv.plot_3d(geo_model, show_data=False)
 
 # %%
 # Adding topography
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# In gempy we can add more grid types for different purposes. We will explore this concept in more detail in the
-# next tutorials (:doc:`ch1_3a_grids`). For now, we will just add a topography grid to our model. This grid allows us to intersect the
-# surfaces as well as compute a high resolution geological mal.
-
+# --------------------
+# gempy supports several other grid types for different purposes -- the Grids tutorial
+# covers all of them in depth. A quick, practical one to see here is topography, which
+# lets a model's surfaces be intersected with real (or, as below, synthetic) terrain:
 
 # %%
 gp.set_topography_from_random(
@@ -294,41 +252,59 @@ gp.set_topography_from_random(
 gp.compute_model(geo_model)
 gpv.plot_2d(geo_model, show_topography=True)
 
-gpv.plot_3d(
-    model=geo_model,
-    plotter_type='basic',
-    show_topography=True,
-    show_surfaces=True,
-    show_lith=True,
-    image=False
-)
+# %%
+gpv.plot_3d(geo_model, show_lith=True, show_topography=True)
 
 # %%
-# Compute at a given location
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 
-# This is done by modifying the grid to a custom grid and recomputing.
-# 
-
-# %% 
-x_i = np.array([[1000, 1000, 1000]])
-lith_values_at_coords: np.ndarray = gp.compute_model_at(
-    gempy_model=geo_model,
-    at=x_i
-)
-lith_values_at_coords
+# Extracting solutions
+# ------------------------
+# Beyond plotting, ``geo_model.solutions`` holds the raw building blocks of the model
+# for further analysis or export. ``dc_meshes`` is a list of the extracted surface
+# meshes, in the same order as the structural frame -- index ``0`` is the youngest
+# element, the fault:
 
 # %%
-# Therefore if we just want the value at **x\_i**: 
+vertices = geo_model.solutions.dc_meshes[0].vertices
+edges = geo_model.solutions.dc_meshes[0].edges
+vertices.shape, edges.shape
 
 # %%
-geo_model.solutions.raw_arrays.custom
+# These vertex coordinates are in gempy's internal, rescaled coordinate system rather
+# than the model's real-world extent. ``input_transform`` (the same transform used to
+# normalize input data before interpolation) maps them back:
 
 # %%
-# .. admonition:: Work in progress 
-#
-#   GemPy3 model serialization is currently being redisigned. Therefore, at the current version, there is not a build in
-#   method to save the model. However, since now the data model should be completely robust, you should be able to save the
-#   :obj:`gempy.core.data.GeoModel` and all its attributes using the standard python library [pickle](https://docs.python.org/3/library/pickle.html)
-#
-# sphinx_gallery_thumbnail_number = -2
+geo_model.input_transform.apply_inverse(vertices)
+
+# %%
+# ``raw_arrays`` holds the underlying arrays directly -- the lithology block
+# (``lith_block``), for instance, comes back as a flat array that needs reshaping to
+# the grid's actual resolution to index into as a volume:
+
+# %%
+lith_block = geo_model.solutions.raw_arrays.lith_block
+lith_block.shape
+
+# %%
+lith_block.reshape(geo_model.grid.regular_grid.resolution).shape
+
+# %%
+# Saving and loading a model
+# ------------------------------
+# A ``GeoModel`` can be saved to a single file and reloaded later, without needing to
+# redo the setup above:
+
+# %%
+gp.save_model(geo_model, path='tutorial_basics_model.gempy')
+
+# %%
+reloaded_model = gp.load_model('tutorial_basics_model.gempy')
+reloaded_model.structural_frame
+
+# %%
+# .. note::
+#    Model serialization is still marked as under active development in gempy (you'll
+#    see a ``UserWarning`` when saving/loading) -- it works, but the format may still
+#    change in a future release.
+
+# sphinx_gallery_thumbnail_number = -3
