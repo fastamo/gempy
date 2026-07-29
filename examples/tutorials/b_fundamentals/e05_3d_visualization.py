@@ -1,6 +1,6 @@
 """
-3D Visualization
-================
+3D Visualization: Interactive Model and Custom Plots
+=======================================================
 
 A tour of gempy_viewer's 3D plotting options
 

@@ -1,6 +1,6 @@
 """
-Building a Model from a Cross-Section
-========================================
+Building a Model from Scratch
+================================
 
 Building a model from scratch, one borehole reading at a time
 
@@ -439,4 +439,4 @@ gpv.plot_3d(geo_model, show_surfaces=True, show_topography=True)
 # 3D model, complete with a fault, a geological map, and a surface topography -- built
 # up one decision at a time rather than handed over in a CSV file.
 
-# sphinx_gallery_thumbnail_number = -2
+# sphinx_gallery_thumbnail_number = 19

@@ -1,6 +1,6 @@
 """
-GemPy Models - Some More Complex Examples
------------------------------------------
+Set of more complex examples
+-----------------------------
 
 A set of more complex examples
 

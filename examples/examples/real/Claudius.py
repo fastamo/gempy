@@ -1,6 +1,6 @@
 """
-Claudius Benchmark Model
-=========================
+Claudius, Queensland, Australia
+=================================
 
 A geomodeling benchmark dataset located in northern Queensland, Australia
 

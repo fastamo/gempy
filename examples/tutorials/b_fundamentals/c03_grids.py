@@ -1,6 +1,6 @@
 """
-Grids
-=====
+Grids: Regular, Octree, and Custom
+=====================================
 
 Why grids exist, and gempy's different grid types
 
@@ -13,6 +13,7 @@ custom points, and a few special-purpose ones -- and how to use each.
 """
 
 # %%
+# sphinx_gallery_thumbnail_number = 4
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -192,7 +193,7 @@ plt.show()
 # A centered grid is an irregular grid where voxels are concentrated around one or more
 # center points and get coarser with distance -- suited to forward physics computations
 # where the influence of a source falls off with distance, such as gravity. See
-# :doc:`../c_specialized/a01_cell_selection` for the full worked example (precomputing
+# :doc:`../c_advanced/a01_cell_selection` for the full worked example (precomputing
 # the gravity kernel):
 
 # %%

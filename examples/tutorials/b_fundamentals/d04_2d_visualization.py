@@ -1,6 +1,6 @@
 """
-2D Visualization
-================
+2D Visualization: Sections and Custom Plots
+==============================================
 
 A tour of gempy_viewer's 2D plotting options
 

@@ -1,6 +1,6 @@
 """
-Hecho Benchmark Model
-========================
+Hecho, Spanish Pyrenees
+==========================
 
 The Hecho Group turbidites, Spanish Pyrenees
 

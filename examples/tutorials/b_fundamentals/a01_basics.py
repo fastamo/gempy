@@ -1,6 +1,6 @@
 """
-Basics
-======
+Basics: Data Classes and Modeling API
+========================================
 
 A closer look at gempy's data classes and modeling API
 
