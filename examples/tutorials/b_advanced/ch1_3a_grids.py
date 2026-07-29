@@ -1,304 +1,237 @@
-
 """
-1.3a: Grids.
-============
+Grids
+=====
+
+Why grids exist, and gempy's different grid types
+
+gempy solves for lithology and structure by interpolating an implicit potential-field
+function -- but that function can only ever be evaluated at a finite set of points, not
+truly continuously across space. That finite set of 3D query points is what gempy calls
+a "grid". This tutorial explains why several different grid types exist side by side --
+a fixed-resolution volume, an adaptively refined version of the same volume, arbitrary
+custom points, and a few special-purpose ones -- and how to use each.
 """
 
+# %%
 import numpy as np
 import matplotlib.pyplot as plt
 
 import gempy as gp
-from gempy.core.data import Grid
-from gempy.core.data.grid_modules import RegularGrid
+import gempy_viewer as gpv
 
-np.random.seed(55500)
-
-# %%
-# The Grid Class
-# --------------
-# 
-# The Grid class interacts with the rest of the data classes and grid
-# subclasses. Its main purpose is to feed coordinates XYZ to the
-# interpolator.
-# 
-
-# %% 
-grid = Grid()
+np.random.seed(1234)
 
 # %%
-# The most important attribute of Grid is ``values`` (and ``values_r``
-# which are the values rescaled) which are the 3D points in space that
-# kriging will be evaluated on. This array will be fed by "grid types" on
-# a **composition** relation with Grid:
-# 
+# Model setup
+# -----------
+# The model below is the same simple fault model used throughout these tutorials. This
+# section demonstrates several different grid configurations, so building it is wrapped
+# in a small helper to avoid repeating the same setup for each one:
 
 # %%
-# .. image:: /_static/grids.jpg
-# 
+data_path = 'https://raw.githubusercontent.com/cgre-aachen/gempy_data/master/'
 
-# %% 
-print(grid.values)
 
-# %%
-# At the moment of writing this tutorial, there are 5 grid types. The
-# number of grid types is scalable, and down the road we aim to connect
-# other grid packages (like `Discretize <https://pypi.org/project/discretize/>`_) as an extra Grid type.
-# 
+def build_model(project_name, resolution, refinement):
+    """Build the simple fault model with a given resolution/refinement, so the
+    difference between grid configurations further down is the only thing that varies.
+    """
+    geo_model = gp.create_geomodel(
+        project_name=project_name,
+        extent=[0, 2000, 0, 2000, 0, 750],
+        resolution=resolution,
+        refinement=refinement,
+        importer_helper=gp.data.ImporterHelper(
+            path_to_orientations=data_path + "/data/input_data/getting_started/simple_fault_model_orientations.csv",
+            path_to_surface_points=data_path + "/data/input_data/getting_started/simple_fault_model_points.csv",
+            hash_surface_points="4cdd54cd510cf345a583610585f2206a2936a05faaae05595b61febfc0191563",
+            hash_orientations="7ba1de060fc8df668d411d0207a326bc94a6cdca9f5fe2ed511fd4db6b3f3526"
+        )
+    )
+    gp.map_stack_to_surfaces(
+        gempy_model=geo_model,
+        mapping_object={
+            "Fault_Series": 'Main_Fault',
+            "Strat_Series": ('Sandstone_2', 'Siltstone', 'Shale', 'Sandstone_1')
+        }
+    )
+    gp.set_is_fault(geo_model, ["Fault_Series"])
+    return geo_model
 
-# %% 
-# This is an enum now
-print(grid.GridTypes)
-
-# %%
-# Each grid contains its own ``values`` attribute as well as other
-# methods to manipulate them depending on the type of grid.
-# 
-
-# %% 
-print(grid.values)
-
-# %%
-# We can see which grids are activated (i.e. they are going to be
-# interpolated and therefore will live on ``Grid().values``) by:
-# 
-
-# %% 
-print(grid.active_grids)
 
 # %%
-# By default, only the *regular grid* (``grid.regular_grid``) is active. However, since the regular
-# grid is still empty, ``Grid().values`` is empty too.
-# 
-
-# %% 
-print(grid.values)
+geo_model = build_model('grids_dense', resolution=[20, 20, 20], refinement=4)
+gp.compute_model(geo_model)
 
 # %%
-# The last important attribute of Grid is the length:
-# 
-
-# %% 
-print(grid.length)
-
-# %%
-# Length gives back the interface indices between grids on the
-# ``Grid().values`` attribute. This can be used after interpolation to
-# know which interpolated values and coordinates correspond to each grid
-# type. You can use the method ``get_grid_args`` to return the indices by
-# name:
-# 
-
-# %% 
-print(grid.topography)
+# Regular grid vs. octree grid
+# -------------------------------
+# ``geo_model.grid`` is a container of several grid types at once, each contributing its
+# own points to the coordinates that actually get interpolated. Which ones are
+# currently contributing is shown by ``active_grids``:
 
 # %%
-# By now all is a bit confusing because we have no values. Let's start
-# adding values to the different grids:
-# 
+geo_model.grid.active_grids
 
 # %%
-# Regular Grid
-# ~~~~~~~~~~~~
-# 
-# The ``Grid`` class has a bunch of methods to set each grid type and
-# activate them.
-# 
-
-# %% 
-help(RegularGrid)
-
-# %% 
-extent = np.array([0, 100, 0, 100, -100, 0])
-resolution = np.array([20, 20, 20])
-grid.dense_grid = RegularGrid(extent, resolution)
-print(grid.regular_grid)  # RegularGrid will return either dense grid or octree grid depending on what is set
+# Passing an explicit ``resolution=[nx, ny, nz]`` to ``create_geomodel``, as above, gives
+# you the **regular grid**: a literal, fixed voxel grid spanning the model's extent at
+# exactly that resolution. ``geo_model.grid.regular_grid`` is this dense grid, and the
+# lithology block returned by ``compute_model`` matches its shape exactly:
 
 # %%
-# Now the regular grid object composed in ``Grid`` has been filled:
-# 
-
-# %% 
-print(grid.regular_grid.values)
+geo_model.grid.regular_grid.resolution
 
 # %%
-# And the regular grid has been set active (it was already active in any
-# case):
-# 
-
-# %% 
-print(grid.active_grids)
+geo_model.solutions.raw_arrays.lith_block.shape
 
 # %%
-# Therefore, the grid values will be equal to the regular grid:
-# 
-
-# %% 
-print(grid.values)
-
-# %%
-# And the indices to extract the different arrays:
-# 
-
-# %% 
-print(grid.length)
+# Leaving ``resolution=None`` instead gives you the **octree grid** -- an adaptively
+# refined grid that concentrates resolution near surface contacts rather than spreading
+# it evenly, controlled by ``refinement`` (the number of octree levels) instead of an
+# explicit resolution:
 
 # %%
-# Custom Grid
-# ~~~~~~~~~~~
-# 
-# Completely free XYZ values.
-# 
-
-# %% 
-gp.set_custom_grid(grid, np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]))
+geo_model_octree = build_model('grids_octree', resolution=None, refinement=4)
+geo_model_octree.grid.active_grids
 
 # %%
-# Again, ``set_any_grid`` will create a grid and activate it. So now the
-# composed object will contain values:
-# 
-
-# %% 
-print(grid.custom_grid.values)
+# Its effective resolution is derived, not given directly: gempy picks a coarse base
+# resolution from the extent's aspect ratio, then doubles it per axis for each
+# additional octree level beyond the first. For this cubic-ish extent and
+# ``refinement=4``, that works out to:
 
 # %%
-# And since it is active, it will be added to the grid.values stack:
-# 
-
-# %% 
-print(grid.active_grids)
-
-# %% 
-print(grid.values.shape)
+geo_model_octree.grid.regular_grid.resolution
 
 # %%
-# We can still recover those values with ``get_grid`` or by getting the
-# slicing args:
-# 
-
-# %% 
-print(grid.custom_grid)
-
-# %% 
-print(grid.custom_grid.values)
-
-# %%
-# Topography
-# ~~~~~~~~~~
-# 
-# Now we can set the topography. :class:`Topography <gempy.core.grid_modules.topography.Topography>`
-# contains methods to create manual topographies as well as using gdal for
-# dealing with raster data. By default, we will create a random topography:
-# 
+# A model can only ever have one of the two active at a time -- passing a real
+# ``resolution`` always selects the regular grid, full stop. This matters because every
+# other tutorial in this series passes *both* ``resolution`` and ``refinement`` together
+# (as the very first model on this page just did), which raises the obvious question:
+# what does ``refinement`` actually do once an explicit ``resolution`` has already
+# settled which grid is active?
+#
+# Surface smoothing
+# ~~~~~~~~~~~~~~~~~~
+# The answer: ``refinement`` still controls how many octree levels gempy builds
+# internally to extract the smooth 3D surface meshes seen in ``plot_3d`` (via dual
+# contouring) -- entirely independently of the regular grid's resolution. A higher
+# ``refinement`` gives smoother, more detailed surfaces from the *same* lithology block,
+# at the cost of more computation. Compare a low and a high value with the resolution
+# held fixed:
 
 # %%
-gp.set_topography_from_random(grid)
-
-# %% 
-print(grid.active_grids)
-
-# %%
-# Now the grid values will contain both the regular grid and topography:
-# 
-
-# %% 
-print(grid.values, grid.length)
-
-# %% 
-print(grid.topography.values)
+geo_model_coarse = build_model('grids_coarse_mesh', resolution=[20, 20, 20], refinement=2)
+gp.compute_model(geo_model_coarse)
+gpv.plot_3d(geo_model_coarse, show_data=False)
 
 # %%
-# We can compare it to the topography.values:
-# 
-
-# %% 
-print(grid.topography.values)
+geo_model_fine = build_model('grids_fine_mesh', resolution=[20, 20, 20], refinement=6)
+gp.compute_model(geo_model_fine)
+gpv.plot_3d(geo_model_fine, show_data=False)
 
 # %%
-# Now that we have more than one grid, we can activate and deactivate any
-# of them in real time:
-# 
-
-# %% 
-grid.active_grids ^= grid.GridTypes.TOPOGRAPHY
-grid.active_grids ^= grid.GridTypes.DENSE
-
-# %%
-# Since now all grids are deactivated, the values will be empty:
-# 
-
-# %% 
-print(grid.values)
-
-# %% 
-grid.active_grids |= grid.GridTypes.TOPOGRAPHY
-
-# %% 
-print(grid.values, grid.values.shape)
-
-# %% 
-grid.active_grids |= grid.GridTypes.DENSE
-
-# %% 
-print(grid.values)
+# Both models have the exact same 20x20x20 lithology block -- only the extracted surface
+# mesh changes.
+#
+# One gotcha worth knowing: ``refinement`` defaults to 1, but a value below 2 isn't
+# actually usable for surface extraction, so gempy silently substitutes a floor of 4
+# levels in that case rather than erroring. Passing ``refinement=1`` (or omitting it
+# entirely, as most examples in this documentation do) therefore already gets you that
+# floor, not a literal single level:
 
 # %%
-# Centered Grid
-# ~~~~~~~~~~~~~
-# 
-# This grid contains an irregular grid where the majority of voxels are
-# centered around a value (or values). This type of grid is usually used
-# to compute certain types of forward physics where the influence
-# decreases with distance (e.g. gravity: Check `tutorial 2.2-Cell-selection <https://github.com/cgre-aachen/gempy/blob/master/examples/tutorials/ch2-Geophysics/ch2_2_cell_selection.py>`_
-# )
-# 
-
-# %% 
-gp.set_centered_grid(
-    grid,
-    centers=np.array([[300, 0, 0], [0, 0, 0]]),
-    resolution=[10, 10, 20],
-    radius=np.array([100, 100, 100])
-)
+geo_model.interpolation_options.evaluation_options.number_octree_levels
 
 # %%
-# Resolution and radius create a geometrically spaced kernel (blue dots) which
-# will be used to create a grid around each of the center points (red
-# dots):
-# 
+# Custom grid
+# -------------
+# A custom grid is an arbitrary set of XYZ points -- useful for querying the model at
+# specific locations that don't line up with a regular grid at all, such as borehole
+# positions:
 
-# %% 
+# %%
+borehole_xyz = np.array([
+    [1000, 1000, 700],
+    [1000, 1000, 400],
+    [1000, 1000, 100],
+])
+gp.set_custom_grid(geo_model.grid, borehole_xyz)
+geo_model.grid.active_grids
 
+# %%
+# Setting a custom grid, like any other grid type, requires recomputing before its
+# values are available. The interpolated lithology at each custom grid point then shows
+# up in its own dedicated array, ``solutions.raw_arrays.custom`` -- one value per point,
+# in the same order they were given:
+
+# %%
+gp.compute_model(geo_model)
+geo_model.solutions.raw_arrays.custom
+
+# %%
+# The three points sit along a vertical line -- exactly what a borehole looks like --
+# each colored here by its interpolated lithology:
+
+# %%
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
-
 ax.scatter(
-    grid.centered_grid.values[:, 0],
-    grid.centered_grid.values[:, 1],
-    grid.centered_grid.values[:, 2],
-    '.',
-    alpha=.2
+    borehole_xyz[:, 0], borehole_xyz[:, 1], borehole_xyz[:, 2],
+    c=geo_model.solutions.raw_arrays.custom, cmap='viridis', s=100
 )
-
-ax.scatter(
-    np.array([[300, 0, 0], [0, 0, 0]])[:, 0],
-    np.array([[300, 0, 0], [0, 0, 0]])[:, 1],
-    np.array([[300, 0, 0], [0, 0, 0]])[:, 2],
-    c='r',
-    alpha=1,
-    s=30
-)
-
-ax.set_xlim(-100, 400)
-ax.set_ylim(-100, 100)
-ax.set_zlim(-120, 0)
-ax.set_xlabel('X Label')
-ax.set_ylabel('Y Label')
-ax.set_zlabel('Z Label')
+ax.set_xlabel('X')
+ax.set_ylabel('Y')
+ax.set_zlabel('Z')
 plt.show()
 
 # %%
-# Section Grid
-# ~~~~~~~~~~~~
-# 
-# This grid type has its own tutorial. See :doc:`ch1_3b_cross_sections`
-#
+# Centered grid
+# ---------------
+# A centered grid is an irregular grid where voxels are concentrated around one or more
+# center points and get coarser with distance -- suited to forward physics computations
+# where the influence of a source falls off with distance, such as gravity. See
+# :doc:`../c_specialized/ch2_2_cell_selection` for the full worked example (precomputing
+# the gravity kernel):
+
+# %%
+centers = np.array([[1000, 1000, 750]])
+gp.set_centered_grid(
+    geo_model.grid,
+    centers=centers,
+    resolution=[10, 10, 20],
+    radius=np.array([1000, 1000, 1000])
+)
+geo_model.grid.active_grids
+gp.compute_model(geo_model)
+
+# %%
+# Resolution and radius create a geometrically spaced kernel (blue) around each center
+# point (red), coarsening with distance rather than staying uniform like the regular
+# grid:
+
+# %%
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+ax.scatter(
+    geo_model.grid.centered_grid.values[:, 0],
+    geo_model.grid.centered_grid.values[:, 1],
+    geo_model.grid.centered_grid.values[:, 2],
+    alpha=.2
+)
+ax.scatter(centers[:, 0], centers[:, 1], centers[:, 2], c='r', s=30)
+ax.set_xlabel('X')
+ax.set_ylabel('Y')
+ax.set_zlabel('Z')
+plt.show()
+
+# %%
+# Topography and section grids
+# -------------------------------
+# Topography (:func:`gp.set_topography_from_random <gempy.set_topography_from_random>`
+# and related functions) and custom sections (:func:`gp.set_section_grid
+# <gempy.set_section_grid>`) are also just grid types under the hood -- each adds its
+# own entry to ``active_grids`` exactly like the regular, octree, custom, and centered
+# grids above. They're covered in their own right, together with all of gempy_viewer's
+# plotting options for them, in :doc:`ch1_6_2d_visualization`.
