@@ -157,7 +157,7 @@ gp.compute_model(
 
 # %%
 # Plotting the 2D model with and without topography
-gpv.plot_2d(geo_model, show_topography=False, section_names=['topography'], show_lith=True)
+gpv.plot_2d(geo_model, show_topography=False, section_names=['topography'], show_lith=True, show_boundaries=False)
 gpv.plot_2d(geo_model, cell_number=[4], direction=['y'], show_topography=True, show_data=True)
 gpv.plot_2d(geo_model, cell_number=[-4], direction=['y'], show_topography=True, show_data=True)
 
