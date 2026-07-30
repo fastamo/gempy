@@ -1,6 +1,6 @@
 """
-Kriging and Gaussian Field Simulation
-========================================
+Kriging and Simulating Properties
+====================================
 
 Interpolating and simulating a conditioned field within a modeled domain
 
