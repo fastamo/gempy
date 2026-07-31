@@ -1,8 +1,9 @@
 -r base-requirements.txt
 
 gempy_plugins
+gstools
 
 # for data download
-pooch 
+pooch
 scipy
 scikit-image
