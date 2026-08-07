@@ -1,11 +1,18 @@
 """
-Chapter 4: Analyzing Geomodel Topology
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Analyzing Geomodel Topology
+==============================
 
+Extracting adjacency graphs and topology relationships from a computed model
+
+This tutorial uses the ``gempy_plugins`` topology analysis module to derive an adjacency
+graph between the unique geobodies of a faulted model, then visualizes and queries that graph.
+
+.. note::
+   This tutorial relies on ``gempy_plugins``, a separate package maintained in its own
+   repository rather than by the core GemPy developers.
 """
 import gempy as gp
 import gempy_viewer as gpv
-from gempy_viewer.modules.plot_2d.visualization_2d import Plot2D
 from gempy_plugins.topology_analysis import topology as tp
 
 import os
@@ -17,19 +24,19 @@ warnings.filterwarnings("ignore")
 # %%
 # Load example Model
 # ^^^^^^^^^^^^^^^^^^
-# 
+#
 # First let's set up a very simple example model. For that we initialize
-# the geo_data object with the correct model extent and the resolution we
+# the geo_model object with the correct model extent and the resolution we
 # like. Then we load our data points from csv files and set the series and
 # order the formations (stratigraphic pile).
-# 
+#
 
-# %% 
+# %%
 data_path = os.path.abspath('../../')
 
-geo_model: gp.data.GeoModel = gp.create_geomodel(
+geo_model = gp.create_geomodel(
     project_name='Model_Tutorial6',
-    extent= [0, 3000, 0, 20, 0, 2000],
+    extent=[0, 3000, 0, 20, 0, 2000],
     resolution=[50, 10, 67],
     refinement=1,  # * For this model is better not to use octrees because we want to see what is happening in the scalar fields
     importer_helper=gp.data.ImporterHelper(
@@ -50,7 +57,7 @@ gp.map_stack_to_surfaces(
 gp.set_is_fault(geo_model, ['fault'])
 
 geo_model.interpolation_options.mesh_extraction = False
-sol = gp.compute_model(geo_model)
+gp.compute_model(geo_model)
 
 # %% 
 gpv.plot_2d(geo_model, cell_number=[5])
@@ -59,20 +66,20 @@ gpv.plot_2d(geo_model, cell_number=[5])
 # %%
 # Analyzing Topology
 # ^^^^^^^^^^^^^^^^^^
-# 
-# GemPy sports in-built functionality to analyze the topology of its
-# models. All we need for this is our geo_data object, lithology block and
-# the fault block. We input those into *gp.topology_compute* and get
-# several useful outputs:
-# 
+#
+# The gempy_plugins topology module lets us analyze the topology of a
+# model. All we need for this is our geo_model object, the lithology
+# block, and the fault block. We pass those into ``tp.compute_topology``,
+# which is the starting point for several useful things:
+#
 # -  an adjacency graph **G**, representing the topological relationships
 #    of the model
-# -  the **centroids** of the all the unique topological regions in the
+# -  the **centroids** of all the unique topological regions in the
 #    model (x,y,z coordinates of their center)
-# -  a list of all the unique labels (labels_unique)
-# -  two look-up-tables from the lithology id's to the node labels, and
-#    vice versa
-# 
+# -  from these, look-up tables between lithology id's and node labels
+#    (and vice versa), and adjacency queries between specific geobodies
+#
+
 
 # %% 
 edges, centroids = tp.compute_topology(geo_model)
@@ -122,7 +129,7 @@ gpv.plot_topology(
 )
 
 # %% 
-plot_2d: Plot2D = gpv.plot_2d(geo_model, cell_number=[5], show=False)
+plot_2d = gpv.plot_2d(geo_model, cell_number=[5], show=False)
 gpv.plot_topology(
     regular_grid=geo_model.grid.regular_grid,
     edges=edges,
@@ -191,7 +198,7 @@ tp.get_lot_lith_to_node_id(lith_lot)
 # sphinx_gallery_thumbnail_number = 4
 dedges, dcentroids = tp.get_detailed_labels(geo_model, edges, centroids)
 # %% 
-plot_2d: Plot2D = gpv.plot_2d(geo_model, cell_number=[5], show=False)
+plot_2d = gpv.plot_2d(geo_model, cell_number=[5], show=False)
 gpv.plot_topology(
     regular_grid=geo_model.grid.regular_grid,
     edges=dedges,
@@ -213,7 +220,7 @@ dcentroids
 
 
 # %%
-# So lets say we want to check if the purple layer (id 5) is connected
+# So let's say we want to check if the purple layer (id 5) is connected
 # across the fault to the yellow layer (id 3). For this we can make easy
 # use of the detailed labeling and the ``check_adjacency`` function:
 # 

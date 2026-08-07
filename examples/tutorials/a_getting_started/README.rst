@@ -1,4 +1,5 @@
-Getting Started
----------------
+Getting Started (Video Tutorials)
+----------------------------------
 
-Here you can see how to run a simple GemPy example.
+This section mirrors the tutorial series on the `GemPy YouTube channel
+<https://www.youtube.com/@GemPy3D>`_, so you can follow along with the videos.

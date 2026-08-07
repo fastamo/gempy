@@ -91,7 +91,7 @@ gp.set_section_grid(
 # sphinx_gallery_thumbnail_number = 2
 
 gp.set_topography_from_random(grid=geo_model.grid)
-gpv.plot_2d(geo_model, show_topography=True, section_names=['topography'])
+gpv.plot_2d(geo_model, show_topography=True, section_names=['topography'], show_boundaries=False)
 
 # %%
 # It has additional keywords to play around with:
