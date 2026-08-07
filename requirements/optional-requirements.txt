@@ -1,6 +1,6 @@
 -r base-requirements.txt
 
-gempy_plugins
+gempy_plugins=>2026.0.3
 
 # for data download
 pooch 
