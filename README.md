@@ -101,42 +101,43 @@ Follow these [guidelines](https://github.com/cgre-aachen/gempy/blob/WIP_readme-u
 <p>
 <table>
 <tr>
+                                                                                                                                                                                                                               
+  <td>
+  <a href="https://docs.gempy.org/tutorials/b_fundamentals/d04_2d_visualization.html#sphx-glr-tutorials-b-fundamentals-d04-2d-visualization-py">
+  <img alt="colormapped image plot thumbnail" src="https://docs.gempy.org/_images/sphx_glr_d04_2d_visualization_thumb.png" width="300" />
+  </a>
+  </td>
 
   <td>
-  <a href="https://docs.gempy.org/tutorials/ch1_fundamentals/ch1_3b_cross_sections.html#sphx-glr-tutorials-ch1-fundamentals-ch1-3b-cross-sections-py">
-  <img alt="colormapped image plot thumbnail" src="https://docs.gempy.org/_images/sphx_glr_ch1_3b_cross_sections_004.png" width="300" />
+  <a href="https://docs.gempy.org/tutorials/b_fundamentals/e05_3d_visualization.html#sphx-glr-tutorials-b-fundamentals-e05-3d-visualization-py">
+  <img alt="colormapped image plot thumbnail" src="https://docs.gempy.org/_images/sphx_glr_e05_3d_visualization_thumb.png" width="300" />
   </a>
   </td>
-  
+
   <td>
-  <a href="https://docs.gempy.org/tutorials/ch1_fundamentals/ch1_4_onlap_relations.html#sphx-glr-tutorials-ch1-fundamentals-ch1-4-onlap-relations-py">
-  <img alt="colormapped image plot thumbnail" src="https://docs.gempy.org/_images/sphx_glr_ch1_4_onlap_relations_002.png" width="300" />
-  </a>
-  </td>
-  
-   <td>
-  <a href="https://docs.gempy.org/examples/geometries/g07_combination.html#sphx-glr-examples-geometries-g07-combination-py">
-  <img alt="colormapped image plot thumbnail" src="https://docs.gempy.org/_images/sphx_glr_g07_combination_005.png" width="300" />
+  <a href="https://docs.gempy.org/tutorials/b_fundamentals/b02_cross_section.html#sphx-glr-tutorials-b-fundamentals-b02-cross-section-py">
+  <img alt="colormapped image plot thumbnail" src="https://docs.gempy.org/_images/sphx_glr_b02_cross_section_thumb.png" width="300" />
   </a>
   </td>
 
 </tr>
 <tr>
+ 
   <td>
-  <a href="https://docs.gempy.org/tutorials/ch3-Interpolations/ch3_1_kriging_interpolation_and_simulation.html#sphx-glr-tutorials-ch3-interpolations-ch3-1-kriging-interpolation-and-simulation-py">
-  <img alt="colormapped image plot thumbnail" src="https://docs.gempy.org/_images/sphx_glr_ch3_1_kriging_interpolation_and_simulation_003.png" width="300" />
+  <a href="https://docs.gempy.org/examples/geometries/g07_combination.html#sphx-glr-examples-geometries-g07-combination-py">
+  <img alt="colormapped image plot thumbnail" src="https://docs.gempy.org/_images/sphx_glr_g07_combination_005.png" width="300" />
   </a>
   </td>
-  
+
   <td>
-  <a href="https://docs.gempy.org/tutorials/ch4-Topology/ch4-1-Topology.html#sphx-glr-tutorials-ch4-topology-ch4-1-topology-py">
-  <img alt="colormapped image plot thumbnail" src="https://docs.gempy.org/_images/sphx_glr_ch4-1-Topology_005.png" width="300" />
+  <a href="https://docs.gempy.org/tutorials/c_advanced/c03_kriging.html#sphx-glr-tutorials-c-advanced-c03-kriging-py">
+  <img alt="colormapped image plot thumbnail" src="https://docs.gempy.org/_images/sphx_glr_c03_kriging_thumb.png" width="300" />
   </a>
   </td>
-  
+
   <td>
-  <a href="https://docs.gempy.org/tutorials/ch4-Topology/ch4-1-Topology.html#sphx-glr-tutorials-ch4-topology-ch4-1-topology-py">
-  <img alt="colormapped image plot thumbnail" src="https://docs.gempy.org/_images/sphx_glr_ch4-1-Topology_004.png" width="300" />
+  <a href="https://docs.gempy.org/tutorials/c_advanced/d04_topology.html#sphx-glr-tutorials-c-advanced-d04-topology-py">
+  <img alt="colormapped image plot thumbnail" src="https://docs.gempy.org/_images/sphx_glr_d04_topology_003.png" width="300" />
   </a>
   </td>
 
